@@ -265,6 +265,10 @@ func ChooseSessionCountPrompt() string {
 	return "Choose number of sessions:\n"
 }
 
+func IdlePrompt() string {
+	return "Get to work!\n"
+}
+
 func GetPrompt(s State) string {
 	switch s.Step {
 	case ChooseWorkingDuration:
@@ -273,6 +277,8 @@ func GetPrompt(s State) string {
 		return ChooseBreakDurationPrompt()
 	case ChooseSessionCount:
 		return ChooseSessionCountPrompt()
+	case Idle:
+		return IdlePrompt()
 	}
 
 	return "\n"
@@ -332,6 +338,11 @@ func FooterView(s State) string {
 	case ChooseSessionCount:
 		if s.HasSelectedSessionCount() {
 			view += ", c = confirm\n"
+			return view
+		}
+	case Idle:
+		if s.HasSelectedSessionCount() {
+			view += ", s = start, s = stop\n"
 			return view
 		}
 	}
