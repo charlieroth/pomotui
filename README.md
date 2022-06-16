@@ -9,10 +9,14 @@ TUI framework
 
 ## Features To Implement
 
-- [ ] choose working duration (defaults to 30 min)
-- [ ] choose working session count (defaults to 4, then long break)
-- [ ] choose break duration (defaults to 5 min)
-- [ ] choose long break duration (defaults to 15 mins)
+- [x] choose working duration (defaults to 30 min)
+  - [ ] defaults to 30 min
+- [x] choose break duration 
+  - [ ] defaults to 5 min
+- [x] choose working session count 
+  - [ ] defaults to 4
+- [x] choose long break duration 
+  - [ ] defaults to 15 min
 - [ ] save & persist configuration
 - [ ] start clock
 - [ ] stop clock
