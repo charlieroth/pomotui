@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"time"
 
+	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -11,8 +14,8 @@ const (
 	ChooseWorkingDuration = "ChooseWorkingDuration"
 	ChooseBreakDuration   = "ChooseBreakDuration"
 	ChooseSessionCount    = "ChooseSessionCount"
-	Idle                  = "Idle"
 	Working               = "Working"
+	Break                 = "Break"
 )
 
 type WorkingDuration struct {
@@ -33,14 +36,16 @@ type SessionCount struct {
 	selected string
 }
 
-// TODO(charlieroth): Add timer model
-// https://github.com/charmbracelet/bubbletea/blob/master/examples/timer/main.go
-
 type State struct {
-	Step            string
-	WorkingDuration WorkingDuration
-	BreakDuration   BreakDuration
-	SessionCount    SessionCount
+	Step                           string
+	CurrentWorkSession             int
+	WorkingDurationTimer           timer.Model
+	HasStartedWorkingDurationTimer bool
+	BreakDurationTimer             timer.Model
+	HasStartedBreakDurationTimer   bool
+	WorkingDuration                WorkingDuration
+	BreakDuration                  BreakDuration
+	SessionCount                   SessionCount
 }
 
 func (s State) HasSelectedWorkingDuration() bool {
@@ -96,7 +101,8 @@ func (s State) CurrentChoices() []string {
 
 func InitState() State {
 	return State{
-		Step: ChooseWorkingDuration,
+		Step:               ChooseWorkingDuration,
+		CurrentWorkSession: 0,
 		WorkingDuration: WorkingDuration{
 			choices:  []string{"15", "20", "25", "30", "45", "50", "60", "90"},
 			cursor:   0,
@@ -172,21 +178,41 @@ func HandleConfirm(s State) (tea.Model, tea.Cmd) {
 	case ChooseWorkingDuration:
 		if !s.HasSelectedWorkingDuration() {
 			return s, nil
-		} else {
-			s.Step = ChooseBreakDuration
 		}
+
+		selectedTime, err := strconv.Atoi(s.WorkingDuration.selected)
+		if err != nil {
+			panic("Failed to convert working duration time to int")
+		}
+
+		amountOfTime := time.Duration(selectedTime) * time.Minute
+		s.WorkingDurationTimer = timer.NewWithInterval(amountOfTime, time.Second)
+		s.Step = ChooseBreakDuration
 	case ChooseBreakDuration:
 		if !s.HasSelectedBreakDuration() {
 			return s, nil
-		} else {
-			s.Step = ChooseSessionCount
 		}
+
+		selectedTime, err := strconv.Atoi(s.BreakDuration.selected)
+		if err != nil {
+			panic("Failed to convert break duration time to int")
+		}
+
+		amountOfTime := time.Duration(selectedTime) * time.Second
+		s.BreakDurationTimer = timer.New(amountOfTime)
+		s.Step = ChooseSessionCount
 	case ChooseSessionCount:
 		if !s.HasSelectedSessionCount() {
 			return s, nil
-		} else {
-			s.Step = Idle
 		}
+
+		sessionCount, err := strconv.Atoi(s.SessionCount.selected)
+		if err != nil {
+			panic("Failed to convert session count to int")
+		}
+
+		s.CurrentWorkSession = sessionCount
+		s.Step = Working
 	}
 	return s, nil
 }
@@ -231,9 +257,24 @@ func HandleEnter(s State) (tea.Model, tea.Cmd) {
 	return s, nil
 }
 
+func HandleWorkingDurationTimerTickMsg(s State, msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	s.WorkingDurationTimer, cmd = s.WorkingDurationTimer.Update(msg)
+	return s, cmd
+}
+
+func HandleWorkingDurationTimerStartStopMsg(s State, msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	s.WorkingDurationTimer, cmd = s.WorkingDurationTimer.Update(msg)
+	return s, cmd
+}
+
 func (s State) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
+	case timer.TickMsg:
+		return HandleWorkingDurationTimerTickMsg(s, msg)
+	case timer.StartStopMsg:
+		return HandleWorkingDurationTimerStartStopMsg(s, msg)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
@@ -246,6 +287,11 @@ func (s State) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return HandleEnter(s)
 		case "c":
 			return HandleConfirm(s)
+		case "s":
+			return s, s.WorkingDurationTimer.Toggle()
+		case "i":
+            s.HasStartedWorkingDurationTimer = true
+			return s, s.WorkingDurationTimer.Init()
 		}
 	}
 
@@ -264,8 +310,12 @@ func ChooseSessionCountPrompt() string {
 	return "Choose number of sessions:\n"
 }
 
-func IdlePrompt() string {
-	return "Get to work!\n"
+func WorkingPrompt() string {
+	return "Working\n"
+}
+
+func BreakPrompt() string {
+	return "Break :)\n"
 }
 
 func GetPrompt(s State) string {
@@ -276,8 +326,10 @@ func GetPrompt(s State) string {
 		return ChooseBreakDurationPrompt()
 	case ChooseSessionCount:
 		return ChooseSessionCountPrompt()
-	case Idle:
-		return IdlePrompt()
+	case Working:
+		return WorkingPrompt()
+	case Break:
+		return BreakPrompt()
 	}
 
 	return "\n"
@@ -320,6 +372,12 @@ func ChoicesView(s State) string {
 	return view
 }
 
+func WorkingView(s State) string {
+	view := ""
+	view += s.WorkingDurationTimer.View()
+	return view
+}
+
 func FooterView(s State) string {
 	view := "\nq = quit"
 
@@ -339,11 +397,24 @@ func FooterView(s State) string {
 			view += ", c = confirm\n"
 			return view
 		}
-	case Idle:
-		if s.HasSelectedSessionCount() {
-			view += ", s = start, s = stop\n"
+	case Working:
+		if s.HasStartedWorkingDurationTimer && s.WorkingDurationTimer.Running() {
+			view += ", s = stop\n"
 			return view
 		}
+
+		if s.WorkingDurationTimer.Timedout() {
+			// TODO(charlieroth): show "start break" message
+			view += ", timedout\n"
+			return view
+		}
+
+		if s.HasStartedWorkingDurationTimer && !s.WorkingDurationTimer.Running() {
+            view += ", s = start\n"
+        } else {
+            view += ", i = init\n"
+        }
+		return view
 	}
 
 	view += "\n"
@@ -353,7 +424,14 @@ func FooterView(s State) string {
 func (s State) View() string {
 	view := ""
 	view += GetPrompt(s)
-	view += ChoicesView(s)
+
+	switch s.Step {
+	case ChooseWorkingDuration, ChooseBreakDuration, ChooseSessionCount:
+		view += ChoicesView(s)
+	case Working:
+		view += WorkingView(s)
+	}
+
 	view += FooterView(s)
 	return view
 }
