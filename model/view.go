@@ -2,14 +2,16 @@ package model
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/charlieroth/pomotui/state"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func CreateView(m Model) string {
-	view := ""
-	view += GetPrompt(m)
+	view := GetTitle(m)
 
 	switch m.State {
 	case state.ChooseWorkingDuration, state.ChooseBreakDuration, state.ChooseSessionCount:
@@ -22,38 +24,38 @@ func CreateView(m Model) string {
 	return view
 }
 
-func WorkingDurationPrompt() string {
+func WorkingDurationTitle() string {
 	return "Choose a working duration:\n"
 }
 
-func ChooseBreakDurationPrompt() string {
+func BreakDurationTitle() string {
 	return "Choose a break duration:\n"
 }
 
-func ChooseSessionCountPrompt() string {
+func SessionCountTitle() string {
 	return "Choose number of sessions:\n"
 }
 
-func WorkingPrompt() string {
-	return "Working\n"
+func WorkingTitle() string {
+	return "Work\n"
 }
 
-func BreakPrompt() string {
-	return "Break :)\n"
+func BreakTitle() string {
+	return "Break\n"
 }
 
-func GetPrompt(m Model) string {
+func GetTitle(m Model) string {
 	switch m.State {
 	case state.ChooseWorkingDuration:
-		return WorkingDurationPrompt()
+		return WorkingDurationTitle()
 	case state.ChooseBreakDuration:
-		return ChooseBreakDurationPrompt()
+		return BreakDurationTitle()
 	case state.ChooseSessionCount:
-		return ChooseSessionCountPrompt()
+		return SessionCountTitle()
 	case state.Working:
-		return WorkingPrompt()
+		return WorkingTitle()
 	case state.Break:
-		return BreakPrompt()
+		return BreakTitle()
 	}
 
 	return "\n"
@@ -99,9 +101,22 @@ func ChoicesView(m Model) string {
 func MainView(m Model) string {
 	view := ""
 	view += m.Timer.View()
-    currentSession := m.CurrentWorkSession
-    totalWorkingSessions := m.SessionCount.selected
-	view += fmt.Sprintf("\n%d of %s", currentSession, totalWorkingSessions)
+    sessionCount, err := strconv.Atoi(m.SessionCount.selected)
+    if err != nil {
+        panic("failed convert session count from string to int")
+    }
+
+    var s strings.Builder
+    for i := 1; i <= sessionCount; i++ {
+        if m.CurrentWorkSession >= i {
+            activeDot := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
+            s.WriteString(" " + activeDot)
+        } else {
+            inActiveDot := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•") 
+            s.WriteString(" " + inActiveDot)
+        }
+    }
+	view += fmt.Sprintf("\n%s", s.String())
 	return view
 }
 

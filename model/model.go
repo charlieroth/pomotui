@@ -4,6 +4,7 @@ import (
 	"github.com/charlieroth/pomotui/state"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -63,7 +64,7 @@ type KeyMap struct {
 }
 
 func NewKeyMap() KeyMap {
-    km := KeyMap{
+	km := KeyMap{
 		Start: key.NewBinding(
 			key.WithKeys("s"),
 			key.WithHelp("s", "start"),
@@ -102,16 +103,17 @@ func NewKeyMap() KeyMap {
 		),
 	}
 
-    km.Start.SetEnabled(false)
-    km.Stop.SetEnabled(false)
-    km.Reset.SetEnabled(false)
+	km.Start.SetEnabled(false)
+	km.Stop.SetEnabled(false)
+	km.Reset.SetEnabled(false)
 
-    return km
+	return km
 }
 
 type Model struct {
 	KeyMap          KeyMap
 	Help            help.Model
+	SessionCounter  paginator.Model
 	WorkingDuration WorkingDuration
 	BreakDuration   BreakDuration
 	SessionCount    SessionCount
@@ -124,11 +126,11 @@ type Model struct {
 
 func New() Model {
 	m := Model{
-		KeyMap:             NewKeyMap(),
-		Help:               help.NewModel(),
-		WorkingDuration:    NewWorkingDuration(),
-		BreakDuration:      NewBreakDuration(),
-		SessionCount:       NewSessionCount(),
+		KeyMap:          NewKeyMap(),
+		Help:            help.NewModel(),
+		WorkingDuration: NewWorkingDuration(),
+		BreakDuration:   NewBreakDuration(),
+		SessionCount:    NewSessionCount(),
 
 		State:              state.ChooseWorkingDuration,
 		CurrentWorkSession: 0,

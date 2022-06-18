@@ -100,7 +100,7 @@ func HandleConfirm(m Model) (tea.Model, tea.Cmd) {
 		if err != nil {
 			panic("Failed to convert working duration time to int")
 		}
-
+        
 		amountOfTime := time.Duration(selectedTime) * time.Second
 		m.Timer = timer.NewWithInterval(amountOfTime, time.Second)
         m.KeyMap.Start.SetEnabled(true)
