@@ -63,7 +63,7 @@ type KeyMap struct {
 }
 
 func NewKeyMap() KeyMap {
-	return KeyMap{
+    km := KeyMap{
 		Start: key.NewBinding(
 			key.WithKeys("s"),
 			key.WithHelp("s", "start"),
@@ -101,6 +101,12 @@ func NewKeyMap() KeyMap {
 			key.WithHelp("q", "quit"),
 		),
 	}
+
+    km.Start.SetEnabled(false)
+    km.Stop.SetEnabled(false)
+    km.Reset.SetEnabled(false)
+
+    return km
 }
 
 type Model struct {

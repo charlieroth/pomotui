@@ -14,8 +14,8 @@ func CreateView(m Model) string {
 	switch m.State {
 	case state.ChooseWorkingDuration, state.ChooseBreakDuration, state.ChooseSessionCount:
 		view += ChoicesView(m)
-	case state.Working:
-		view += WorkingView(m)
+	case state.Working, state.Break:
+		view += MainView(m)
 	}
 
 	view += HelpView(m)
@@ -96,9 +96,12 @@ func ChoicesView(m Model) string {
 	return view
 }
 
-func WorkingView(m Model) string {
+func MainView(m Model) string {
 	view := ""
 	view += m.Timer.View()
+    currentSession := m.CurrentWorkSession
+    totalWorkingSessions := m.SessionCount.selected
+	view += fmt.Sprintf("\n%d of %s", currentSession, totalWorkingSessions)
 	return view
 }
 

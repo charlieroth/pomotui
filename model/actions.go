@@ -71,12 +71,18 @@ func HandleDown(m Model) (tea.Model, tea.Cmd) {
 func HandleConfirm(m Model) (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
+        m.KeyMap.Start.SetEnabled(false)
+        m.KeyMap.Stop.SetEnabled(false)
+        m.KeyMap.Reset.SetEnabled(false)
 		if !m.HasSelectedWorkingDuration() {
 			return m, nil
 		}
 
 		m.State = state.ChooseBreakDuration
 	case state.ChooseBreakDuration:
+        m.KeyMap.Start.SetEnabled(false)
+        m.KeyMap.Stop.SetEnabled(false)
+        m.KeyMap.Reset.SetEnabled(false)
 		if !m.HasSelectedBreakDuration() {
 			return m, nil
 		}
@@ -88,15 +94,17 @@ func HandleConfirm(m Model) (tea.Model, tea.Cmd) {
 		}
 
         // transition into "working" state & set first working session timer
-		m.CurrentWorkSession = 0
+		m.CurrentWorkSession = 1
 		m.State = state.Working
 		selectedTime, err := strconv.Atoi(m.WorkingDuration.selected)
 		if err != nil {
 			panic("Failed to convert working duration time to int")
 		}
 
-		amountOfTime := time.Duration(selectedTime) * time.Minute
+		amountOfTime := time.Duration(selectedTime) * time.Second
 		m.Timer = timer.NewWithInterval(amountOfTime, time.Second)
+        m.KeyMap.Start.SetEnabled(true)
+        m.KeyMap.Stop.SetEnabled(true)
         m.KeyMap.Up.SetEnabled(false)
         m.KeyMap.Down.SetEnabled(false)
         m.KeyMap.Enter.SetEnabled(false)
@@ -158,3 +166,41 @@ func HandleTimerStartStopMsg(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.KeyMap.Start.SetEnabled(!m.Timer.Running())
 	return m, cmd
 }
+
+func HandleTimerTimeout(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+    if m.State == state.Working {
+        // transition to break state
+        m.State = state.Break
+        // set timer to break duration
+		breakTime, err := strconv.Atoi(m.BreakDuration.selected)
+		if err != nil {
+			panic("Failed to convert break duration time to int")
+		}
+
+		amountOfTime := time.Duration(breakTime) * time.Second
+		m.Timer = timer.NewWithInterval(amountOfTime, time.Second)
+        m.TimerInitialized = false
+        // enable start key
+        m.KeyMap.Stop.SetEnabled(false)
+        m.KeyMap.Start.SetEnabled(true)
+        return m, nil
+    }
+    // in break state
+    // transition to working state
+    m.State = state.Working
+    m.CurrentWorkSession += 1
+    // set timer to working duration
+    workTime, err := strconv.Atoi(m.WorkingDuration.selected)
+    if err != nil {
+        panic("Failed to convert work duration time to int")
+    }
+
+    amountOfTime := time.Duration(workTime) * time.Second
+    m.Timer = timer.NewWithInterval(amountOfTime, time.Second)
+    m.TimerInitialized = false
+    // enable start key
+    m.KeyMap.Stop.SetEnabled(false)
+    m.KeyMap.Start.SetEnabled(true)
+    return m, nil
+}
+
