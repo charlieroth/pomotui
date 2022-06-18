@@ -185,10 +185,19 @@ func HandleTimerTimeout(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
         m.KeyMap.Start.SetEnabled(true)
         return m, nil
     }
+
     // in break state
     // transition to working state
     m.State = state.Working
-    m.CurrentWorkSession += 1
+    sessionCount, err := strconv.Atoi(m.SessionCount.selected)
+    if err != nil {
+        panic("Failed to convert work duration time to int")
+    }
+    if m.CurrentWorkSession == sessionCount {
+        m.CurrentWorkSession = 1
+    } else {
+        m.CurrentWorkSession += 1
+    }
     // set timer to working duration
     workTime, err := strconv.Atoi(m.WorkingDuration.selected)
     if err != nil {
