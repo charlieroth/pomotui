@@ -137,46 +137,53 @@ func HandleEnter(m Model) (tea.Model, tea.Cmd) {
 	case state.ChooseWorkingDuration:
 		if m.WorkingDuration.selected == "" {
 			m.WorkingDuration.selected = m.WorkingDuration.choices[m.WorkingDuration.cursor]
-		} else {
-			if m.WorkingDuration.choices[m.WorkingDuration.cursor] != m.WorkingDuration.selected {
-				m.WorkingDuration.selected = m.WorkingDuration.choices[m.WorkingDuration.cursor]
-			} else {
-				m.WorkingDuration.selected = ""
-			}
-		}
+            return m, nil
+		} 
+
+        if m.WorkingDuration.choices[m.WorkingDuration.cursor] != m.WorkingDuration.selected {
+            m.WorkingDuration.selected = m.WorkingDuration.choices[m.WorkingDuration.cursor]
+            return m, nil
+        }
+        
+        m.WorkingDuration.selected = ""
 		return m, nil
 	case state.ChooseBreakDuration:
 		if m.BreakDuration.selected == "" {
 			m.BreakDuration.selected = m.BreakDuration.choices[m.BreakDuration.cursor]
-		} else {
-			if m.BreakDuration.choices[m.BreakDuration.cursor] != m.BreakDuration.selected {
-				m.BreakDuration.selected = m.BreakDuration.choices[m.BreakDuration.cursor]
-			} else {
-				m.BreakDuration.selected = ""
-			}
-		}
+            return m, nil
+		} 
+
+        if m.BreakDuration.choices[m.BreakDuration.cursor] != m.BreakDuration.selected {
+            m.BreakDuration.selected = m.BreakDuration.choices[m.BreakDuration.cursor]
+            return m, nil
+        }
+
+        m.BreakDuration.selected = ""
 		return m, nil
 	case state.ChooseLongBreakDuration:
 		if m.LongBreakDuration.selected == "" {
 			m.LongBreakDuration.selected = m.LongBreakDuration.choices[m.LongBreakDuration.cursor]
-		} else {
-			if m.LongBreakDuration.choices[m.LongBreakDuration.cursor] != m.LongBreakDuration.selected {
-				m.LongBreakDuration.selected = m.LongBreakDuration.choices[m.LongBreakDuration.cursor]
-			} else {
-				m.LongBreakDuration.selected = ""
-			}
+            return m, nil
 		}
+
+        if m.LongBreakDuration.choices[m.LongBreakDuration.cursor] != m.LongBreakDuration.selected {
+            m.LongBreakDuration.selected = m.LongBreakDuration.choices[m.LongBreakDuration.cursor]
+            return m, nil
+        }
+
+        m.LongBreakDuration.selected = ""
 		return m, nil
 	case state.ChooseSessionCount:
 		if m.SessionCount.selected == "" {
 			m.SessionCount.selected = m.SessionCount.choices[m.SessionCount.cursor]
-		} else {
-			if m.SessionCount.choices[m.SessionCount.cursor] != m.SessionCount.selected {
-				m.SessionCount.selected = m.SessionCount.choices[m.SessionCount.cursor]
-			} else {
-				m.SessionCount.selected = ""
-			}
+            return m, nil
 		}
+        if m.SessionCount.choices[m.SessionCount.cursor] != m.SessionCount.selected {
+            m.SessionCount.selected = m.SessionCount.choices[m.SessionCount.cursor]
+            return m, nil
+        }
+
+        m.SessionCount.selected = ""
 		return m, nil
 	}
 
