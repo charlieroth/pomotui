@@ -36,6 +36,11 @@ func HandleUp(m Model) (tea.Model, tea.Cmd) {
 			m.BreakDuration.cursor--
 		}
 		return m, nil
+	case state.ChooseLongBreakDuration:
+		if m.LongBreakDuration.cursor > 0 {
+			m.LongBreakDuration.cursor--
+		}
+		return m, nil
 	case state.ChooseSessionCount:
 		if m.SessionCount.cursor > 0 {
 			m.SessionCount.cursor--
@@ -56,6 +61,11 @@ func HandleDown(m Model) (tea.Model, tea.Cmd) {
 	case state.ChooseBreakDuration:
 		if m.BreakDuration.cursor < len(m.BreakDuration.choices)-1 {
 			m.BreakDuration.cursor++
+		}
+		return m, nil
+	case state.ChooseLongBreakDuration:
+		if m.LongBreakDuration.cursor < len(m.LongBreakDuration.choices)-1 {
+			m.LongBreakDuration.cursor++
 		}
 		return m, nil
 	case state.ChooseSessionCount:
@@ -84,6 +94,15 @@ func HandleConfirm(m Model) (tea.Model, tea.Cmd) {
         m.KeyMap.Stop.SetEnabled(false)
         m.KeyMap.Reset.SetEnabled(false)
 		if !m.HasSelectedBreakDuration() {
+			return m, nil
+		}
+
+		m.State = state.ChooseLongBreakDuration
+	case state.ChooseLongBreakDuration:
+        m.KeyMap.Start.SetEnabled(false)
+        m.KeyMap.Stop.SetEnabled(false)
+        m.KeyMap.Reset.SetEnabled(false)
+		if !m.HasSelectLongBreakDuration() {
 			return m, nil
 		}
 
@@ -134,6 +153,17 @@ func HandleEnter(m Model) (tea.Model, tea.Cmd) {
 				m.BreakDuration.selected = m.BreakDuration.choices[m.BreakDuration.cursor]
 			} else {
 				m.BreakDuration.selected = ""
+			}
+		}
+		return m, nil
+	case state.ChooseLongBreakDuration:
+		if m.LongBreakDuration.selected == "" {
+			m.LongBreakDuration.selected = m.LongBreakDuration.choices[m.LongBreakDuration.cursor]
+		} else {
+			if m.LongBreakDuration.choices[m.LongBreakDuration.cursor] != m.LongBreakDuration.selected {
+				m.LongBreakDuration.selected = m.LongBreakDuration.choices[m.LongBreakDuration.cursor]
+			} else {
+				m.LongBreakDuration.selected = ""
 			}
 		}
 		return m, nil

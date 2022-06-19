@@ -31,7 +31,21 @@ type BreakDuration struct {
 
 func NewBreakDuration() BreakDuration {
 	return BreakDuration{
-		choices:  []string{"5", "10", "15", "20"},
+		choices:  []string{"5", "7", "10"},
+		cursor:   0,
+		selected: "",
+	}
+}
+
+type LongBreakDuration struct {
+	choices  []string
+	cursor   int
+	selected string
+}
+
+func NewLongBreakDuration() LongBreakDuration {
+	return LongBreakDuration{
+		choices:  []string{"15", "20", "25", "30"},
 		cursor:   0,
 		selected: "",
 	}
@@ -111,12 +125,13 @@ func NewKeyMap() KeyMap {
 }
 
 type Model struct {
-	KeyMap          KeyMap
-	Help            help.Model
-	SessionCounter  paginator.Model
-	WorkingDuration WorkingDuration
-	BreakDuration   BreakDuration
-	SessionCount    SessionCount
+	KeyMap            KeyMap
+	Help              help.Model
+	SessionCounter    paginator.Model
+	WorkingDuration   WorkingDuration
+	BreakDuration     BreakDuration
+	LongBreakDuration LongBreakDuration
+	SessionCount      SessionCount
 
 	State              string
 	CurrentWorkSession int
@@ -126,11 +141,12 @@ type Model struct {
 
 func New() Model {
 	m := Model{
-		KeyMap:          NewKeyMap(),
-		Help:            help.NewModel(),
-		WorkingDuration: NewWorkingDuration(),
-		BreakDuration:   NewBreakDuration(),
-		SessionCount:    NewSessionCount(),
+		KeyMap:            NewKeyMap(),
+		Help:              help.NewModel(),
+		WorkingDuration:   NewWorkingDuration(),
+		BreakDuration:     NewBreakDuration(),
+		LongBreakDuration: NewLongBreakDuration(),
+		SessionCount:      NewSessionCount(),
 
 		State:              state.ChooseWorkingDuration,
 		CurrentWorkSession: 0,
@@ -147,6 +163,10 @@ func (m Model) HasSelectedBreakDuration() bool {
 	return m.BreakDuration.selected != ""
 }
 
+func (m Model) HasSelectLongBreakDuration() bool {
+	return m.BreakDuration.selected != ""
+}
+
 func (m Model) HasSelectedSessionCount() bool {
 	return m.SessionCount.selected != ""
 }
@@ -157,6 +177,8 @@ func (m Model) CurrentCursor() int {
 		return m.WorkingDuration.cursor
 	case state.ChooseBreakDuration:
 		return m.BreakDuration.cursor
+	case state.ChooseLongBreakDuration:
+		return m.LongBreakDuration.cursor
 	case state.ChooseSessionCount:
 		return m.SessionCount.cursor
 	}
@@ -170,6 +192,8 @@ func (m Model) CurrentSelectedChoice() string {
 		return m.WorkingDuration.selected
 	case state.ChooseBreakDuration:
 		return m.BreakDuration.selected
+	case state.ChooseLongBreakDuration:
+		return m.LongBreakDuration.selected
 	case state.ChooseSessionCount:
 		return m.SessionCount.selected
 	}
@@ -183,6 +207,8 @@ func (m Model) CurrentChoices() []string {
 		return m.WorkingDuration.choices
 	case state.ChooseBreakDuration:
 		return m.BreakDuration.choices
+	case state.ChooseLongBreakDuration:
+		return m.LongBreakDuration.choices
 	case state.ChooseSessionCount:
 		return m.SessionCount.choices
 	}

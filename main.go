@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"github.com/charlieroth/pomotui/model"
 	tea "github.com/charmbracelet/bubbletea"
-    "github.com/charlieroth/pomotui/model"
+	"os"
 )
 
 func main() {
-    model := model.New()
+	model := model.New()
 	p := tea.NewProgram(model)
 	if err := p.Start(); err != nil {
 		fmt.Printf("Error: %v", err)
