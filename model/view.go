@@ -16,7 +16,7 @@ func CreateView(m Model) string {
 	switch m.State {
 	case state.ChooseWorkingDuration, state.ChooseBreakDuration, state.ChooseLongBreakDuration, state.ChooseSessionCount:
 		view += ChoicesView(m)
-	case state.Working, state.Break:
+	case state.Working, state.Break, state.LongBreak:
 		view += MainView(m)
 	}
 
@@ -47,6 +47,10 @@ func BreakTitle() string {
 	return "Break\n"
 }
 
+func LongBreakTitle() string {
+	return "Long Break\n"
+}
+
 func GetTitle(m Model) string {
 	switch m.State {
 	case state.ChooseWorkingDuration:
@@ -61,6 +65,8 @@ func GetTitle(m Model) string {
 		return WorkingTitle()
 	case state.Break:
 		return BreakTitle()
+	case state.LongBreak:
+		return LongBreakTitle()
 	}
 
 	return "\n"

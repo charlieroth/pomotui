@@ -7,4 +7,5 @@ const (
 	ChooseSessionCount      = "ChooseSessionCount"
 	Working                 = "Working"
 	Break                   = "Break"
+	LongBreak               = "LongBreak"
 )
