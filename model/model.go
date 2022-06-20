@@ -9,57 +9,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type WorkingDuration struct {
+type ChoiceModel struct {
 	choices  []string
 	cursor   int
 	selected string
 }
 
-func NewWorkingDuration() WorkingDuration {
-	return WorkingDuration{
-		choices:  []string{"15", "20", "25", "30", "45", "50", "60", "90"},
-		cursor:   0,
-		selected: "",
-	}
-}
-
-type BreakDuration struct {
-	choices  []string
-	cursor   int
-	selected string
-}
-
-func NewBreakDuration() BreakDuration {
-	return BreakDuration{
-		choices:  []string{"5", "7", "10"},
-		cursor:   0,
-		selected: "",
-	}
-}
-
-type LongBreakDuration struct {
-	choices  []string
-	cursor   int
-	selected string
-}
-
-func NewLongBreakDuration() LongBreakDuration {
-	return LongBreakDuration{
-		choices:  []string{"15", "20", "25", "30"},
-		cursor:   0,
-		selected: "",
-	}
-}
-
-type SessionCount struct {
-	choices  []string
-	cursor   int
-	selected string
-}
-
-func NewSessionCount() SessionCount {
-	return SessionCount{
-		choices:  []string{"4", "5", "6", "7"},
+func NewChoiceModel(choices []string) ChoiceModel {
+	return ChoiceModel{
+		choices:  choices,
 		cursor:   0,
 		selected: "",
 	}
@@ -128,10 +86,10 @@ type Model struct {
 	KeyMap            KeyMap
 	Help              help.Model
 	SessionCounter    paginator.Model
-	WorkingDuration   WorkingDuration
-	BreakDuration     BreakDuration
-	LongBreakDuration LongBreakDuration
-	SessionCount      SessionCount
+	WorkingDuration   ChoiceModel
+	BreakDuration     ChoiceModel
+	LongBreakDuration ChoiceModel
+	SessionCount      ChoiceModel
 
 	State              string
 	CurrentWorkSession int
@@ -141,13 +99,12 @@ type Model struct {
 
 func New() Model {
 	m := Model{
-		KeyMap:            NewKeyMap(),
-		Help:              help.NewModel(),
-		WorkingDuration:   NewWorkingDuration(),
-		BreakDuration:     NewBreakDuration(),
-		LongBreakDuration: NewLongBreakDuration(),
-		SessionCount:      NewSessionCount(),
-
+		KeyMap:             NewKeyMap(),
+		Help:               help.NewModel(),
+		WorkingDuration:    NewChoiceModel([]string{"15", "20", "25", "30", "45", "50", "60", "90"}),
+		BreakDuration:      NewChoiceModel([]string{"5", "7", "10"}),
+		LongBreakDuration:  NewChoiceModel([]string{"15", "20", "25", "30"}),
+		SessionCount:       NewChoiceModel([]string{"4", "5", "6", "7"}),
 		State:              state.ChooseWorkingDuration,
 		CurrentWorkSession: 0,
 		TimerInitialized:   false,

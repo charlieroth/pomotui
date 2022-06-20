@@ -203,7 +203,7 @@ func HandleTimerStartStopMsg(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func HandleTimerTimeout(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+func HandleTimerTimeout(m Model) (tea.Model, tea.Cmd) {
 	sessionCount, err := strconv.Atoi(m.SessionCount.selected)
 	if err != nil {
 		panic("Failed to convert work duration time to int")
