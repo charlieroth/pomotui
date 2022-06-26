@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/charlieroth/pomotui/state"
+	"github.com/charlieroth/pomotui/ui"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/lipgloss"
 )
 
 func CreateView(m Model) string {
@@ -25,18 +25,18 @@ func CreateView(m Model) string {
 }
 
 func WorkingDurationTitle() string {
-	return "Choose a working duration:\n"
+	return "Work Duration:\n"
 }
 
 func BreakDurationTitle() string {
-	return "Choose a break duration:\n"
+	return "Break Duration:\n"
 }
 
 func LongBreakDurationTitle() string {
-	return "Choose a long break duration:\n"
+	return "Long Break Duration:\n"
 }
 func SessionCountTitle() string {
-	return "Choose number of sessions:\n"
+	return "Sesson Count:\n"
 }
 
 func WorkingTitle() string {
@@ -118,11 +118,9 @@ func MainView(m Model) string {
 	var s strings.Builder
 	for i := 1; i <= sessionCount; i++ {
 		if m.CurrentWorkSession >= i {
-			activeDot := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
-			s.WriteString(" " + activeDot)
+			s.WriteString(" " + ui.ActiveString("•"))
 		} else {
-			inActiveDot := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
-			s.WriteString(" " + inActiveDot)
+			s.WriteString(" " + ui.InactivateString("•"))
 		}
 	}
 	view += fmt.Sprintf("\n%s", s.String())
