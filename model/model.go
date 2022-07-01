@@ -24,15 +24,16 @@ func NewChoiceModel(choices []string) ChoiceModel {
 }
 
 type KeyMap struct {
-	Start   key.Binding
-	Stop    key.Binding
-	Up      key.Binding
-	Down    key.Binding
-	Enter   key.Binding
-	Init    key.Binding
-	Confirm key.Binding
-	Reset   key.Binding
-	Quit    key.Binding
+	Start    key.Binding
+	Stop     key.Binding
+	Up       key.Binding
+	Down     key.Binding
+	Enter    key.Binding
+	Init     key.Binding
+	Confirm  key.Binding
+	Continue key.Binding
+	Reset    key.Binding
+	Quit     key.Binding
 }
 
 func NewKeyMap() KeyMap {
@@ -65,6 +66,10 @@ func NewKeyMap() KeyMap {
 			key.WithKeys("c"),
 			key.WithHelp("c", "confirm"),
 		),
+		Continue: key.NewBinding(
+			key.WithKeys("c"),
+			key.WithHelp("c", "continue"),
+		),
 		Reset: key.NewBinding(
 			key.WithKeys("r"),
 			key.WithHelp("r", "reset"),
@@ -77,6 +82,7 @@ func NewKeyMap() KeyMap {
 
 	km.Start.SetEnabled(false)
 	km.Stop.SetEnabled(false)
+	km.Continue.SetEnabled(false)
 	km.Reset.SetEnabled(false)
 
 	return km
