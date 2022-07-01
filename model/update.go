@@ -12,8 +12,8 @@ func HandleUpdate(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 		return HandleTimerTickMsg(m, msg)
 	case timer.StartStopMsg:
 		return HandleTimerStartStopMsg(m, msg)
-    case timer.TimeoutMsg:
-        return HandleTimerTimeout(m)
+	case timer.TimeoutMsg:
+		return HandleTimerTimeout(m)
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.KeyMap.Quit):
@@ -26,8 +26,10 @@ func HandleUpdate(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 			return HandleEnter(m)
 		case key.Matches(msg, m.KeyMap.Confirm):
 			return HandleConfirm(m)
+		case key.Matches(msg, m.KeyMap.Continue):
+			return HandleContinue(m)
 		case key.Matches(msg, m.KeyMap.Start, m.KeyMap.Stop):
-            return HandleStartStop(m)
+			return HandleStartStop(m)
 		}
 	}
 

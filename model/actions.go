@@ -132,6 +132,29 @@ func HandleConfirm(m Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func HandleContinue(m Model) (tea.Model, tea.Cmd) {
+	if m.State == state.Break {
+		workTimeInt, err := strconv.Atoi(m.WorkingDuration.selected)
+		if err != nil {
+			panic("Failed to convert work duration time to int")
+		}
+
+		workTime := time.Duration(workTimeInt) * time.Minute
+		m.Timer = timer.NewWithInterval(workTime, time.Second)
+		m.TimerInitialized = false
+
+		m.KeyMap.Stop.SetEnabled(false)
+		m.KeyMap.Start.SetEnabled(true)
+		m.KeyMap.Continue.SetEnabled(false)
+
+		m.CurrentWorkSession += 1
+		m.State = state.Working
+
+		return m, nil
+	}
+	return nil, nil
+}
+
 func HandleEnter(m Model) (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
@@ -189,10 +212,10 @@ func HandleEnter(m Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func HandleTimerTickMsg(s Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+func HandleTimerTickMsg(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	s.Timer, cmd = s.Timer.Update(msg)
-	return s, cmd
+	m.Timer, cmd = m.Timer.Update(msg)
+	return m, cmd
 }
 
 func HandleTimerStartStopMsg(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -209,71 +232,74 @@ func HandleTimerTimeout(m Model) (tea.Model, tea.Cmd) {
 		panic("Failed to convert work duration time to int")
 	}
 
-    // completed last working session, transition to long break
-    if m.State == state.Working && m.CurrentWorkSession == sessionCount {
+	// completed last working session, transition to long break
+	if m.State == state.Working && m.CurrentWorkSession == sessionCount {
 		breakTimeInt, err := strconv.Atoi(m.LongBreakDuration.selected)
 		if err != nil {
 			panic("Failed to convert long break duration time to int")
 		}
 
-        breakTime := time.Duration(breakTimeInt) * time.Minute
+		breakTime := time.Duration(breakTimeInt) * time.Minute
 		m.Timer = timer.NewWithInterval(breakTime, time.Second)
 		m.TimerInitialized = false
 
 		m.KeyMap.Stop.SetEnabled(false)
 		m.KeyMap.Start.SetEnabled(true)
+		m.KeyMap.Continue.SetEnabled(true)
 
 		m.CurrentWorkSession = 0
 		m.State = state.LongBreak
 		return m, nil
-    }
+	}
 
-    // completed 1 of X working sessions, transition to break
+	// completed 1 of X working sessions, transition to break
 	if m.State == state.Working {
 		breakTimeInt, err := strconv.Atoi(m.BreakDuration.selected)
 		if err != nil {
 			panic("Failed to convert break duration time to int")
 		}
 
-        breakTime := time.Duration(breakTimeInt) * time.Minute
+		breakTime := time.Duration(breakTimeInt) * time.Minute
 		m.Timer = timer.NewWithInterval(breakTime, time.Second)
 		m.TimerInitialized = false
 
 		m.KeyMap.Stop.SetEnabled(false)
 		m.KeyMap.Start.SetEnabled(true)
+		m.KeyMap.Continue.SetEnabled(true)
 
 		m.State = state.Break
 		return m, nil
 	}
 
-    // completed 1 of X breaks, transition to working
-    if m.State == state.Break {
-        workTimeInt, err := strconv.Atoi(m.WorkingDuration.selected)
-        if err != nil {
-            panic("Failed to convert work duration time to int")
-        }
+	// completed 1 of X breaks, transition to working
+	if m.State == state.Break {
+		workTimeInt, err := strconv.Atoi(m.WorkingDuration.selected)
+		if err != nil {
+			panic("Failed to convert work duration time to int")
+		}
 
-        workTime := time.Duration(workTimeInt) * time.Minute
-        m.Timer = timer.NewWithInterval(workTime, time.Second)
-        m.TimerInitialized = false
+		workTime := time.Duration(workTimeInt) * time.Minute
+		m.Timer = timer.NewWithInterval(workTime, time.Second)
+		m.TimerInitialized = false
 
-        m.KeyMap.Stop.SetEnabled(false)
-        m.KeyMap.Start.SetEnabled(true)
+		m.KeyMap.Stop.SetEnabled(false)
+		m.KeyMap.Start.SetEnabled(true)
+		m.KeyMap.Continue.SetEnabled(false)
 
-        m.CurrentWorkSession += 1
-        m.State = state.Working
+		m.CurrentWorkSession += 1
+		m.State = state.Working
 
-        return m, nil
-    }
-    
-    // completed long break, transition to working 
-    if m.State == state.LongBreak {
+		return m, nil
+	}
+
+	// completed long break, transition to working
+	if m.State == state.LongBreak {
 		workTimeInt, err := strconv.Atoi(m.WorkingDuration.selected)
 		if err != nil {
 			panic("Failed to convert working duration time to int")
 		}
 
-        workTime := time.Duration(workTimeInt) * time.Minute
+		workTime := time.Duration(workTimeInt) * time.Minute
 		m.Timer = timer.NewWithInterval(workTime, time.Second)
 		m.TimerInitialized = false
 
@@ -283,7 +309,7 @@ func HandleTimerTimeout(m Model) (tea.Model, tea.Cmd) {
 		m.CurrentWorkSession = 1
 		m.State = state.Working
 		return m, nil
-    }
+	}
 
-    return m, nil
+	return m, nil
 }

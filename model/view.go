@@ -135,6 +135,7 @@ func HelpView(m Model) string {
 		m.KeyMap.Confirm,
 		m.KeyMap.Start,
 		m.KeyMap.Stop,
+		m.KeyMap.Continue,
 		m.KeyMap.Reset,
 		m.KeyMap.Quit,
 	})
