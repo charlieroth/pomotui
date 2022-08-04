@@ -8,9 +8,55 @@ import (
 	"github.com/charlieroth/pomotui/state"
 	"github.com/charlieroth/pomotui/ui"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/faiface/beep"
+	"github.com/faiface/beep/mp3"
+	"github.com/faiface/beep/speaker"
+	"github.com/gen2brain/beeep"
+	"log"
+	"os"
+	"time"
 )
 
+type soundInfo struct {
+	format   beep.Format
+	streamer beep.StreamSeeker
+	done     chan bool
+}
+
+var sound soundInfo
+
+/* Previous model state is saved in view in order to
+catch state changes like an interval ending */
+var previousState string
+
+func init() {
+
+	var err error
+	f, err := os.Open("ring_sound.mp3")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sound.streamer, sound.format, err = mp3.Decode(f)
+
+	speaker.Init(sound.format.SampleRate, sound.format.SampleRate.N(time.Second/10))
+
+	sound.done = make(chan bool)
+
+}
+
+func playRingSound() {
+
+	speaker.Play(beep.Seq(sound.streamer, beep.Callback(func() {
+		sound.done <- true
+	})))
+	<-sound.done
+	sound.streamer.Seek(0)
+}
+
 func CreateView(m Model) string {
+
 	view := GetTitle(m)
 
 	switch m.State {
@@ -19,9 +65,27 @@ func CreateView(m Model) string {
 	case state.Working, state.Break, state.LongBreak:
 		view += MainView(m)
 	}
-
 	view += HelpView(m)
+
+	if breakEndJustHappened(m) {
+		beeep.Notify("Break end", "C'mon, back to work", "")
+		go playRingSound()
+	} else if breakJustHappened(m) {
+		beeep.Notify("Work inteval finished", "Time for a break!", "")
+		go playRingSound()
+	}
+	previousState = m.State
 	return view
+}
+
+func breakEndJustHappened(m Model) bool {
+	return (m.State == state.Working &&
+		(previousState == state.Break || previousState == state.LongBreak))
+}
+
+func breakJustHappened(m Model) bool {
+	return (previousState == state.Working &&
+		(m.State == state.Break || m.State == state.LongBreak))
 }
 
 func WorkingDurationTitle() string {
@@ -108,6 +172,7 @@ func ChoicesView(m Model) string {
 }
 
 func MainView(m Model) string {
+
 	view := ""
 	view += m.Timer.View()
 	sessionCount, err := strconv.Atoi(m.SessionCount.selected)
