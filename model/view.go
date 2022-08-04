@@ -1,10 +1,8 @@
 package model
 
 import (
+	"embed"
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/charlieroth/pomotui/state"
 	"github.com/charlieroth/pomotui/ui"
 	"github.com/charmbracelet/bubbles/key"
@@ -13,7 +11,8 @@ import (
 	"github.com/faiface/beep/speaker"
 	"github.com/gen2brain/beeep"
 	"log"
-	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,7 +22,11 @@ type soundInfo struct {
 	done     chan bool
 }
 
-var sound soundInfo
+var (
+	//go:embed resources/ring_sound.mp3
+	f     embed.FS
+	sound soundInfo
+)
 
 /* Previous model state is saved in view in order to
 catch state changes like an interval ending */
@@ -32,13 +35,13 @@ var previousState string
 func init() {
 
 	var err error
-	f, err := os.Open("ring_sound.mp3")
+	data, err := f.Open("resources/ring_sound.mp3")
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	sound.streamer, sound.format, err = mp3.Decode(f)
+	sound.streamer, sound.format, err = mp3.Decode(data)
 
 	speaker.Init(sound.format.SampleRate, sound.format.SampleRate.N(time.Second/10))
 
@@ -68,7 +71,7 @@ func CreateView(m Model) string {
 	view += HelpView(m)
 
 	if breakEndJustHappened(m) {
-		beeep.Notify("Break end", "C'mon, back to work", "")
+		beeep.Notify("End of break", "C'mon, back to work", "")
 		go playRingSound()
 	} else if breakJustHappened(m) {
 		beeep.Notify("Work inteval finished", "Time for a break!", "")
