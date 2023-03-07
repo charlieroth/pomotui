@@ -3,12 +3,15 @@ module github.com/charlieroth/pomotui
 go 1.18
 
 require (
-	github.com/charmbracelet/bubbles v0.11.0 // indirect
-	github.com/charmbracelet/bubbletea v0.21.0 // indirect
-	github.com/charmbracelet/lipgloss v0.5.0 // indirect
+	github.com/charmbracelet/bubbles v0.11.0
+	github.com/charmbracelet/bubbletea v0.21.0
+	github.com/charmbracelet/lipgloss v0.5.0
+	github.com/faiface/beep v1.1.0
+	github.com/gen2brain/beeep v0.0.0-20220518085355-d7852edf42fc
+)
+
+require (
 	github.com/containerd/console v1.0.3 // indirect
-	github.com/faiface/beep v1.1.0 // indirect
-	github.com/gen2brain/beeep v0.0.0-20220518085355-d7852edf42fc // indirect
 	github.com/go-toast/toast v0.0.0-20190211030409-01e6764cf0a4 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/hajimehoshi/go-mp3 v0.3.0 // indirect
