@@ -6,30 +6,30 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func HandleUpdate(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
+func (m Model) HandleUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case timer.TickMsg:
-		return HandleTimerTickMsg(m, msg)
+		return m.HandleTimerTickMsg(msg)
 	case timer.StartStopMsg:
-		return HandleTimerStartStopMsg(m, msg)
+		return m.HandleTimerStartStopMsg(msg)
 	case timer.TimeoutMsg:
-		return HandleTimerTimeout(m)
+		return m.HandleTimerTimeout()
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.KeyMap.Quit):
-			return HandleQuit(m)
+			return m.HandleQuit()
 		case key.Matches(msg, m.KeyMap.Up):
-			return HandleUp(m)
+			return m.HandleUp()
 		case key.Matches(msg, m.KeyMap.Down):
-			return HandleDown(m)
+			return m.HandleDown()
 		case key.Matches(msg, m.KeyMap.Enter):
-			return HandleEnter(m)
+			return m.HandleEnter()
 		case key.Matches(msg, m.KeyMap.Confirm):
-			return HandleConfirm(m)
+			return m.HandleConfirm()
 		case key.Matches(msg, m.KeyMap.Continue):
-			return HandleContinue(m)
+			return m.HandleContinue()
 		case key.Matches(msg, m.KeyMap.Start, m.KeyMap.Stop):
-			return HandleStartStop(m)
+			return m.HandleStartStop()
 		}
 	}
 

@@ -15,6 +15,7 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 	"github.com/gen2brain/beeep"
+	//"github.com/rs/zerolog"
 )
 
 type soundInfo struct {
@@ -89,7 +90,7 @@ func CreateView(m Model) string {
 	if breakEndJustHappened(m) {
 		err := beeep.Notify("End of break", "C'mon, back to work", "")
 		if err != nil {
-			log.Panicf("Error showing notification: %v", err)
+			log.Println(fmt.Errorf("Error showing notification: %v", err))
 			return ""
 		}
 		go playRingSound(sound)
@@ -115,49 +116,22 @@ func breakJustHappened(m Model) bool {
 		(m.State == state.Break || m.State == state.LongBreak))
 }
 
-func WorkingDurationTitle() string {
-	return "Work Duration:\n"
-}
-
-func BreakDurationTitle() string {
-	return "Break Duration:\n"
-}
-
-func LongBreakDurationTitle() string {
-	return "Long Break Duration:\n"
-}
-func SessionCountTitle() string {
-	return "Sesson Count:\n"
-}
-
-func WorkingTitle() string {
-	return "Work\n"
-}
-
-func BreakTitle() string {
-	return "Break\n"
-}
-
-func LongBreakTitle() string {
-	return "Long Break\n"
-}
-
 func GetTitle(m Model) string {
 	switch m.State {
 	case state.ChooseWorkingDuration:
-		return WorkingDurationTitle()
+		return "Working duration:\n"
 	case state.ChooseBreakDuration:
-		return BreakDurationTitle()
+		return "Break duration:\n"
 	case state.ChooseLongBreakDuration:
-		return LongBreakDurationTitle()
+		return "Long break duration:\n"
 	case state.ChooseSessionCount:
-		return SessionCountTitle()
+		return "Session count:\n"
 	case state.Working:
-		return WorkingTitle()
+		return "Work:\n"
 	case state.Break:
-		return BreakTitle()
+		return "Break:\n"
 	case state.LongBreak:
-		return LongBreakTitle()
+		return "Long break:\n"
 	}
 
 	return "\n"

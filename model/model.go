@@ -101,6 +101,7 @@ type Model struct {
 	CurrentWorkSession int
 	Timer              timer.Model
 	TimerInitialized   bool
+	ModelHandler
 }
 
 func New() Model {
@@ -185,7 +186,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return HandleUpdate(msg, m)
+	return m.HandleUpdate(msg)
 }
 
 func (m Model) View() string {
