@@ -1,8 +1,13 @@
 package model
 
 import (
-	"embed"
 	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/charlieroth/pomotui/state"
 	"github.com/charlieroth/pomotui/ui"
 	"github.com/charmbracelet/bubbles/key"
@@ -10,10 +15,6 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 	"github.com/gen2brain/beeep"
-	"log"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type soundInfo struct {
@@ -22,40 +23,53 @@ type soundInfo struct {
 	done     chan bool
 }
 
-var (
-	//go:embed resources/ring_sound.mp3
-	f     embed.FS
-	sound soundInfo
-)
+/*
+	Previous model state is saved in view in order to
 
-/* Previous model state is saved in view in order to
-catch state changes like an interval ending */
+catch state changes like an interval ending
+*/
 var previousState string
 
-func init() {
-
-	var err error
-	data, err := f.Open("resources/ring_sound.mp3")
-
+func decodeSound() soundInfo {
+	var (
+		err   error
+		sound soundInfo
+	)
+	data, err := os.Open("resources/ring_sound.mp3")
 	if err != nil {
-		log.Fatal(err)
+		log.Panicf("Error opening sound file: %v", err)
 	}
+	defer data.Close()
 
 	sound.streamer, sound.format, err = mp3.Decode(data)
-
-	speaker.Init(sound.format.SampleRate, sound.format.SampleRate.N(time.Second/10))
-
-	sound.done = make(chan bool)
-
+	if err != nil {
+		log.Panicf("Error decoding sound file: %v", err)
+	}
+	return sound
 }
 
-func playRingSound() {
+func init() {
+	sound := decodeSound()
+	err := speaker.Init(sound.format.SampleRate, sound.format.SampleRate.N(time.Second/10))
+	if err != nil {
+		log.Fatalf("Error initializing speaker: %v", err)
+	}
 
+	sound.done = make(chan bool)
+}
+
+func playRingSound(sound soundInfo) {
+	speaker.Lock()
+	defer speaker.Unlock()
+	speaker.Clear()
 	speaker.Play(beep.Seq(sound.streamer, beep.Callback(func() {
 		sound.done <- true
 	})))
 	<-sound.done
-	sound.streamer.Seek(0)
+	err := sound.streamer.Seek(0)
+	if err != nil {
+		log.Panicf("Error seeking through sound file: %v", err)
+	}
 }
 
 func CreateView(m Model) string {
@@ -70,12 +84,22 @@ func CreateView(m Model) string {
 	}
 	view += HelpView(m)
 
+	sound := decodeSound()
+
 	if breakEndJustHappened(m) {
-		beeep.Notify("End of break", "C'mon, back to work", "")
-		go playRingSound()
+		err := beeep.Notify("End of break", "C'mon, back to work", "")
+		if err != nil {
+			log.Panicf("Error showing notification: %v", err)
+			return ""
+		}
+		go playRingSound(sound)
 	} else if breakJustHappened(m) {
-		beeep.Notify("Work inteval finished", "Time for a break!", "")
-		go playRingSound()
+		err := beeep.Notify("Work inteval finished", "Time for a break!", "")
+		if err != nil {
+			log.Panicf("Error showing notification: %v", err)
+			return ""
+		}
+		go playRingSound(sound)
 	}
 	previousState = m.State
 	return view
@@ -175,15 +199,16 @@ func ChoicesView(m Model) string {
 }
 
 func MainView(m Model) string {
-
 	view := ""
 	view += m.Timer.View()
+
 	sessionCount, err := strconv.Atoi(m.SessionCount.selected)
 	if err != nil {
-		panic("failed convert session count from string to int")
+		panic("failed to convert session count from string to int")
 	}
 
 	var s strings.Builder
+
 	for i := 1; i <= sessionCount; i++ {
 		if m.CurrentWorkSession >= i {
 			s.WriteString(" " + ui.ActiveString("•"))

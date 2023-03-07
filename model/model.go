@@ -111,6 +111,7 @@ func New() Model {
 		BreakDuration:      NewChoiceModel([]string{"5", "7", "10"}),
 		LongBreakDuration:  NewChoiceModel([]string{"15", "20", "25", "30"}),
 		SessionCount:       NewChoiceModel([]string{"4", "5", "6", "7"}),
+		SessionCounter:     paginator.NewModel(),
 		State:              state.ChooseWorkingDuration,
 		CurrentWorkSession: 0,
 		TimerInitialized:   false,
