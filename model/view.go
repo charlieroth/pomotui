@@ -1,9 +1,9 @@
 package model
 
 import (
+	"embed"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +15,6 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 	"github.com/gen2brain/beeep"
-	//"github.com/rs/zerolog"
 )
 
 type soundInfo struct {
@@ -29,14 +28,19 @@ type soundInfo struct {
 
 catch state changes like an interval ending
 */
-var previousState string
+var (
+	previousState string
+	//go:embed resources/ring_sound.mp3
+	f embed.FS
+)
 
 func decodeSound() soundInfo {
 	var (
 		err   error
 		sound soundInfo
 	)
-	data, err := os.Open("resources/ring_sound.mp3")
+	bell := "resources/ring_sound.mp3"
+	data, err := f.Open(bell)
 	if err != nil {
 		log.Panicf("Error opening sound file: %v", err)
 	}
