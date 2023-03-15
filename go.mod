@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/faiface/beep v1.1.0
 	github.com/gen2brain/beeep v0.0.0-20230307103607-6e717729cb4f
+	github.com/golang/mock v1.6.0
 )
 
 require (
