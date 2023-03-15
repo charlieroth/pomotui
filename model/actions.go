@@ -23,11 +23,11 @@ type ModelHandler interface {
 	HandleUpdate(msg tea.Msg) (tea.Model, tea.Cmd)
 }
 
-func (m Model) HandleQuit() (tea.Model, tea.Cmd) {
+func (m *Model) HandleQuit() (tea.Model, tea.Cmd) {
 	return m, tea.Quit
 }
 
-func (m Model) HandleStartStop() (tea.Model, tea.Cmd) {
+func (m *Model) HandleStartStop() (tea.Model, tea.Cmd) {
 	if !m.TimerInitialized {
 		m.TimerInitialized = true
 		m.KeyMap.Stop.SetEnabled(true)
@@ -38,7 +38,7 @@ func (m Model) HandleStartStop() (tea.Model, tea.Cmd) {
 	return m, m.Timer.Toggle()
 }
 
-func (m Model) HandleUp() (tea.Model, tea.Cmd) {
+func (m *Model) HandleUp() (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
 		if m.WorkingDuration.cursor > 0 {
