@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/charlieroth/pomotui/state"
@@ -78,7 +79,7 @@ func playRingSound(sound soundInfo) {
 }
 
 func CreateView(m Model) string {
-
+	var wg sync.WaitGroup
 	view := GetTitle(m)
 
 	switch m.State {
@@ -89,6 +90,7 @@ func CreateView(m Model) string {
 	}
 	view += HelpView(m)
 
+	wg.Add(1)
 	sound := decodeSound()
 
 	if breakEndJustHappened(m) {
@@ -97,14 +99,20 @@ func CreateView(m Model) string {
 			log.Println(fmt.Errorf("Error showing notification: %v", err))
 			return ""
 		}
-		go playRingSound(sound)
+		go func() {
+			playRingSound(sound)
+			wg.Done()
+		}()
 	} else if breakJustHappened(m) {
 		err := beeep.Notify("Work inteval finished", "Time for a break!", "")
 		if err != nil {
 			log.Panicf("Error showing notification: %v", err)
 			return ""
 		}
-		go playRingSound(sound)
+		go func() {
+			playRingSound(sound)
+			wg.Done()
+		}()
 	}
 	previousState = m.State
 	return view
