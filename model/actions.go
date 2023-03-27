@@ -161,7 +161,7 @@ func (m *Model) HandleContinue() (tea.Model, tea.Cmd) {
 		m.KeyMap.Start.SetEnabled(true)
 		m.KeyMap.Continue.SetEnabled(false)
 
-		m.CurrentWorkSession += 1
+		m.CurrentWorkSession++
 		m.State = state.Working
 
 		return m, nil
@@ -300,7 +300,7 @@ func (m *Model) HandleTimerTimeout() (tea.Model, tea.Cmd) {
 		m.KeyMap.Start.SetEnabled(true)
 		m.KeyMap.Continue.SetEnabled(false)
 
-		m.CurrentWorkSession += 1
+		m.CurrentWorkSession++
 		m.State = state.Working
 
 		return m, nil

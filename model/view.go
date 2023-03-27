@@ -3,7 +3,6 @@ package model
 import (
 	"embed"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,6 +15,8 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 	"github.com/gen2brain/beeep"
+
+	"github.com/rs/zerolog/log"
 )
 
 type soundInfo struct {
@@ -36,6 +37,7 @@ var (
 )
 
 func decodeSound() soundInfo {
+	log.Debug().Msg("Decoding sound")
 	var (
 		err   error
 		sound soundInfo
@@ -43,13 +45,13 @@ func decodeSound() soundInfo {
 	bell := "resources/ring_sound.mp3"
 	data, err := f.Open(bell)
 	if err != nil {
-		log.Panicf("Error opening sound file: %v", err)
+		log.Error().Err(err).Msg("Error opening sound file")
 	}
 	defer data.Close()
 
 	sound.streamer, sound.format, err = mp3.Decode(data)
 	if err != nil {
-		log.Panicf("Error decoding sound file: %v", err)
+		log.Error().Err(err).Msg("Error decoding sound file")
 	}
 	return sound
 }
@@ -58,7 +60,7 @@ func init() {
 	sound := decodeSound()
 	err := speaker.Init(sound.format.SampleRate, sound.format.SampleRate.N(time.Second/10))
 	if err != nil {
-		log.Fatalf("Error initializing speaker: %v", err)
+		log.Panic().Err(err).Msg("Error initializing speaker")
 	}
 
 	sound.done = make(chan bool)
@@ -74,7 +76,7 @@ func playRingSound(sound soundInfo) {
 	<-sound.done
 	err := sound.streamer.Seek(0)
 	if err != nil {
-		log.Panicf("Error seeking through sound file: %v", err)
+		log.Error().Err(err).Msg("Error seeking to beginning of sound file")
 	}
 }
 
@@ -83,7 +85,8 @@ func CreateView(m Model) string {
 	view := GetTitle(m)
 
 	switch m.State {
-	case state.ChooseWorkingDuration, state.ChooseBreakDuration, state.ChooseLongBreakDuration, state.ChooseSessionCount:
+	case state.ChooseWorkingDuration, state.ChooseBreakDuration,
+		state.ChooseLongBreakDuration, state.ChooseSessionCount:
 		view += ChoicesView(m)
 	case state.Working, state.Break, state.LongBreak:
 		view += MainView(m)
@@ -96,7 +99,7 @@ func CreateView(m Model) string {
 	if breakEndJustHappened(m) {
 		err := beeep.Notify("End of break", "C'mon, back to work", "")
 		if err != nil {
-			log.Println(fmt.Errorf("Error showing notification: %v", err))
+			log.Error().Err(err).Msg("Error showing notification")
 			return ""
 		}
 		go func() {
@@ -106,7 +109,7 @@ func CreateView(m Model) string {
 	} else if breakJustHappened(m) {
 		err := beeep.Notify("Work inteval finished", "Time for a break!", "")
 		if err != nil {
-			log.Panicf("Error showing notification: %v", err)
+			log.Error().Err(err).Msg("Error showing notification")
 			return ""
 		}
 		go func() {
