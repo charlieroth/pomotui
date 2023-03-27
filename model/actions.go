@@ -65,7 +65,7 @@ func (m *Model) HandleUp() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) HandleDown() (tea.Model, tea.Cmd) {
+func (m *Model) HandleDown() (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
 		if m.WorkingDuration.cursor < len(m.WorkingDuration.choices)-1 {
@@ -92,7 +92,7 @@ func (m Model) HandleDown() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) HandleConfirm() (tea.Model, tea.Cmd) {
+func (m *Model) HandleConfirm() (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
 		m.KeyMap.Start.SetEnabled(false)
@@ -146,7 +146,7 @@ func (m Model) HandleConfirm() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) HandleContinue() (tea.Model, tea.Cmd) {
+func (m *Model) HandleContinue() (tea.Model, tea.Cmd) {
 	if m.State == state.Break {
 		workTimeInt, err := strconv.Atoi(m.WorkingDuration.selected)
 		if err != nil {
@@ -169,7 +169,7 @@ func (m Model) HandleContinue() (tea.Model, tea.Cmd) {
 	return nil, nil
 }
 
-func (m Model) HandleEnter() (tea.Model, tea.Cmd) {
+func (m *Model) HandleEnter() (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
 		if m.WorkingDuration.selected == "" {
@@ -226,13 +226,13 @@ func (m Model) HandleEnter() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) HandleTimerTickMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) HandleTimerTickMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.Timer, cmd = m.Timer.Update(msg)
 	return m, cmd
 }
 
-func (m Model) HandleTimerStartStopMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) HandleTimerStartStopMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.Timer, cmd = m.Timer.Update(msg)
 	m.KeyMap.Stop.SetEnabled(m.Timer.Running())
@@ -240,7 +240,7 @@ func (m Model) HandleTimerStartStopMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) HandleTimerTimeout() (tea.Model, tea.Cmd) {
+func (m *Model) HandleTimerTimeout() (tea.Model, tea.Cmd) {
 	sessionCount, err := strconv.Atoi(m.SessionCount.selected)
 	if err != nil {
 		panic("Failed to convert work duration time to int")
