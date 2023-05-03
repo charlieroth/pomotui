@@ -101,16 +101,18 @@ type Model struct {
 	CurrentWorkSession int
 	Timer              timer.Model
 	TimerInitialized   bool
+	ModelHandler
 }
 
 func New() Model {
 	m := Model{
 		KeyMap:             NewKeyMap(),
-		Help:               help.NewModel(),
+		Help:               help.New(),
 		WorkingDuration:    NewChoiceModel([]string{"15", "20", "25", "30", "45", "50", "60", "90"}),
 		BreakDuration:      NewChoiceModel([]string{"5", "7", "10"}),
 		LongBreakDuration:  NewChoiceModel([]string{"15", "20", "25", "30"}),
 		SessionCount:       NewChoiceModel([]string{"4", "5", "6", "7"}),
+		SessionCounter:     paginator.New(),
 		State:              state.ChooseWorkingDuration,
 		CurrentWorkSession: 0,
 		TimerInitialized:   false,
@@ -184,7 +186,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return HandleUpdate(msg, m)
+	return m.HandleUpdate(msg)
 }
 
 func (m Model) View() string {

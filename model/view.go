@@ -3,6 +3,11 @@ package model
 import (
 	"embed"
 	"fmt"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/charlieroth/pomotui/state"
 	"github.com/charlieroth/pomotui/ui"
 	"github.com/charmbracelet/bubbles/key"
@@ -10,10 +15,8 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 	"github.com/gen2brain/beeep"
-	"log"
-	"strconv"
-	"strings"
-	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type soundInfo struct {
@@ -22,60 +25,97 @@ type soundInfo struct {
 	done     chan bool
 }
 
+/*
+	Previous model state is saved in view in order to
+
+catch state changes like an interval ending
+*/
 var (
+	previousState string
 	//go:embed resources/ring_sound.mp3
-	f     embed.FS
-	sound soundInfo
+	f embed.FS
 )
 
-/* Previous model state is saved in view in order to
-catch state changes like an interval ending */
-var previousState string
-
-func init() {
-
-	var err error
-	data, err := f.Open("resources/ring_sound.mp3")
-
+func decodeSound() soundInfo {
+	log.Debug().Msg("Decoding sound")
+	var (
+		err   error
+		sound soundInfo
+	)
+	bell := "resources/ring_sound.mp3"
+	data, err := f.Open(bell)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msg("Error opening sound file")
 	}
+	defer data.Close()
 
 	sound.streamer, sound.format, err = mp3.Decode(data)
-
-	speaker.Init(sound.format.SampleRate, sound.format.SampleRate.N(time.Second/10))
-
-	sound.done = make(chan bool)
-
+	if err != nil {
+		log.Error().Err(err).Msg("Error decoding sound file")
+	}
+	return sound
 }
 
-func playRingSound() {
+func init() {
+	sound := decodeSound()
+	err := speaker.Init(sound.format.SampleRate, sound.format.SampleRate.N(time.Second/10))
+	if err != nil {
+		log.Panic().Err(err).Msg("Error initializing speaker")
+	}
 
+	sound.done = make(chan bool)
+}
+
+func playRingSound(sound soundInfo) {
+	speaker.Lock()
+	defer speaker.Unlock()
+	speaker.Clear()
 	speaker.Play(beep.Seq(sound.streamer, beep.Callback(func() {
 		sound.done <- true
 	})))
 	<-sound.done
-	sound.streamer.Seek(0)
+	err := sound.streamer.Seek(0)
+	if err != nil {
+		log.Error().Err(err).Msg("Error seeking to beginning of sound file")
+	}
 }
 
 func CreateView(m Model) string {
-
+	var wg sync.WaitGroup
 	view := GetTitle(m)
 
 	switch m.State {
-	case state.ChooseWorkingDuration, state.ChooseBreakDuration, state.ChooseLongBreakDuration, state.ChooseSessionCount:
+	case state.ChooseWorkingDuration, state.ChooseBreakDuration,
+		state.ChooseLongBreakDuration, state.ChooseSessionCount:
 		view += ChoicesView(m)
 	case state.Working, state.Break, state.LongBreak:
 		view += MainView(m)
 	}
 	view += HelpView(m)
 
+	wg.Add(1)
+	sound := decodeSound()
+
 	if breakEndJustHappened(m) {
-		beeep.Notify("End of break", "C'mon, back to work", "")
-		go playRingSound()
+		err := beeep.Notify("End of break", "C'mon, back to work", "")
+		if err != nil {
+			log.Error().Err(err).Msg("Error showing notification")
+			return ""
+		}
+		go func() {
+			playRingSound(sound)
+			wg.Done()
+		}()
 	} else if breakJustHappened(m) {
-		beeep.Notify("Work inteval finished", "Time for a break!", "")
-		go playRingSound()
+		err := beeep.Notify("Work inteval finished", "Time for a break!", "")
+		if err != nil {
+			log.Error().Err(err).Msg("Error showing notification")
+			return ""
+		}
+		go func() {
+			playRingSound(sound)
+			wg.Done()
+		}()
 	}
 	previousState = m.State
 	return view
@@ -91,49 +131,22 @@ func breakJustHappened(m Model) bool {
 		(m.State == state.Break || m.State == state.LongBreak))
 }
 
-func WorkingDurationTitle() string {
-	return "Work Duration:\n"
-}
-
-func BreakDurationTitle() string {
-	return "Break Duration:\n"
-}
-
-func LongBreakDurationTitle() string {
-	return "Long Break Duration:\n"
-}
-func SessionCountTitle() string {
-	return "Sesson Count:\n"
-}
-
-func WorkingTitle() string {
-	return "Work\n"
-}
-
-func BreakTitle() string {
-	return "Break\n"
-}
-
-func LongBreakTitle() string {
-	return "Long Break\n"
-}
-
 func GetTitle(m Model) string {
 	switch m.State {
 	case state.ChooseWorkingDuration:
-		return WorkingDurationTitle()
+		return "Working duration:\n"
 	case state.ChooseBreakDuration:
-		return BreakDurationTitle()
+		return "Break duration:\n"
 	case state.ChooseLongBreakDuration:
-		return LongBreakDurationTitle()
+		return "Long break duration:\n"
 	case state.ChooseSessionCount:
-		return SessionCountTitle()
+		return "Session count:\n"
 	case state.Working:
-		return WorkingTitle()
+		return "Work:\n"
 	case state.Break:
-		return BreakTitle()
+		return "Break:\n"
 	case state.LongBreak:
-		return LongBreakTitle()
+		return "Long break:\n"
 	}
 
 	return "\n"
@@ -175,15 +188,16 @@ func ChoicesView(m Model) string {
 }
 
 func MainView(m Model) string {
-
 	view := ""
 	view += m.Timer.View()
+
 	sessionCount, err := strconv.Atoi(m.SessionCount.selected)
 	if err != nil {
-		panic("failed convert session count from string to int")
+		panic("failed to convert session count from string to int")
 	}
 
 	var s strings.Builder
+
 	for i := 1; i <= sessionCount; i++ {
 		if m.CurrentWorkSession >= i {
 			s.WriteString(" " + ui.ActiveString("•"))

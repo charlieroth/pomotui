@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/charlieroth/pomotui/model"
 	tea "github.com/charmbracelet/bubbletea"
-	"os"
 )
 
 func main() {
-	model := model.New()
-	p := tea.NewProgram(model)
-	if err := p.Start(); err != nil {
+	m := model.New()
+	p := tea.NewProgram(m)
+	err, _ := p.Run()
+	if err != nil {
 		fmt.Printf("Error: %v", err)
 		os.Exit(1)
 	}

@@ -9,11 +9,25 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func HandleQuit(m Model) (tea.Model, tea.Cmd) {
+type ModelHandler interface {
+	HandleQuit(tea.Model, tea.Cmd)
+	HandleStartStop(tea.Model, tea.Cmd)
+	HandleUp(tea.Model, tea.Cmd)
+	HandleDown(tea.Model, tea.Cmd)
+	HandleConfirm(tea.Model, tea.Cmd)
+	HandleContinue(tea.Model, tea.Cmd)
+	HandleEnter(tea.Model, tea.Cmd)
+	HandleTimerTickMsg(timer.TickMsg) (tea.Model, tea.Cmd)
+	HandleTimerStartStopMsg(timer.StartStopMsg) (tea.Model, tea.Cmd)
+	HandleTimerTimeout() (tea.Model, tea.Cmd)
+	HandleUpdate(msg tea.Msg) (tea.Model, tea.Cmd)
+}
+
+func (m *Model) HandleQuit() (tea.Model, tea.Cmd) {
 	return m, tea.Quit
 }
 
-func HandleStartStop(m Model) (tea.Model, tea.Cmd) {
+func (m *Model) HandleStartStop() (tea.Model, tea.Cmd) {
 	if !m.TimerInitialized {
 		m.TimerInitialized = true
 		m.KeyMap.Stop.SetEnabled(true)
@@ -24,7 +38,7 @@ func HandleStartStop(m Model) (tea.Model, tea.Cmd) {
 	return m, m.Timer.Toggle()
 }
 
-func HandleUp(m Model) (tea.Model, tea.Cmd) {
+func (m *Model) HandleUp() (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
 		if m.WorkingDuration.cursor > 0 {
@@ -51,7 +65,7 @@ func HandleUp(m Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func HandleDown(m Model) (tea.Model, tea.Cmd) {
+func (m *Model) HandleDown() (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
 		if m.WorkingDuration.cursor < len(m.WorkingDuration.choices)-1 {
@@ -78,7 +92,7 @@ func HandleDown(m Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func HandleConfirm(m Model) (tea.Model, tea.Cmd) {
+func (m *Model) HandleConfirm() (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
 		m.KeyMap.Start.SetEnabled(false)
@@ -132,7 +146,7 @@ func HandleConfirm(m Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func HandleContinue(m Model) (tea.Model, tea.Cmd) {
+func (m *Model) HandleContinue() (tea.Model, tea.Cmd) {
 	if m.State == state.Break {
 		workTimeInt, err := strconv.Atoi(m.WorkingDuration.selected)
 		if err != nil {
@@ -147,7 +161,7 @@ func HandleContinue(m Model) (tea.Model, tea.Cmd) {
 		m.KeyMap.Start.SetEnabled(true)
 		m.KeyMap.Continue.SetEnabled(false)
 
-		m.CurrentWorkSession += 1
+		m.CurrentWorkSession++
 		m.State = state.Working
 
 		return m, nil
@@ -155,7 +169,7 @@ func HandleContinue(m Model) (tea.Model, tea.Cmd) {
 	return nil, nil
 }
 
-func HandleEnter(m Model) (tea.Model, tea.Cmd) {
+func (m *Model) HandleEnter() (tea.Model, tea.Cmd) {
 	switch m.State {
 	case state.ChooseWorkingDuration:
 		if m.WorkingDuration.selected == "" {
@@ -212,13 +226,13 @@ func HandleEnter(m Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func HandleTimerTickMsg(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) HandleTimerTickMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.Timer, cmd = m.Timer.Update(msg)
 	return m, cmd
 }
 
-func HandleTimerStartStopMsg(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) HandleTimerStartStopMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.Timer, cmd = m.Timer.Update(msg)
 	m.KeyMap.Stop.SetEnabled(m.Timer.Running())
@@ -226,7 +240,7 @@ func HandleTimerStartStopMsg(m Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func HandleTimerTimeout(m Model) (tea.Model, tea.Cmd) {
+func (m *Model) HandleTimerTimeout() (tea.Model, tea.Cmd) {
 	sessionCount, err := strconv.Atoi(m.SessionCount.selected)
 	if err != nil {
 		panic("Failed to convert work duration time to int")
@@ -286,7 +300,7 @@ func HandleTimerTimeout(m Model) (tea.Model, tea.Cmd) {
 		m.KeyMap.Start.SetEnabled(true)
 		m.KeyMap.Continue.SetEnabled(false)
 
-		m.CurrentWorkSession += 1
+		m.CurrentWorkSession++
 		m.State = state.Working
 
 		return m, nil
